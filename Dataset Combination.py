@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import pandas as pd
 import glob
 from difflib import get_close_matches
@@ -15,10 +9,6 @@ fbref_df = pd.concat([pd.read_csv(file, encoding='utf-8', encoding_errors='repla
 
 football_data_files = sorted(glob.glob("D:/#CSProject/Data/FD/*.csv"), reverse=True)  # Folder Location Containing Football Data files 
 football_data_df = pd.concat([pd.read_csv(file, encoding='utf-8', encoding_errors='replace') for file in football_data_files], ignore_index=True)
-
-
-# In[2]:
-
 
 fbref_df['Date'] = pd.to_datetime(fbref_df['Date'], errors='coerce')  
 football_data_df['Date'] = pd.to_datetime(football_data_df['Date'], format='%d/%m/%Y', errors='coerce')  
@@ -40,10 +30,6 @@ football_data_df = football_data_df.rename(columns={
     'AwayTeam': 'Away_Team',
     'Div': 'League'
 })
-
-
-# In[3]:
-
 
 name_mapping_fbref = {
     'Spal': 'SPAL',
@@ -75,10 +61,6 @@ name_mapping_fd = {
 football_data_df['Home_Team'] = football_data_df['Home_Team'].replace(name_mapping_fd)
 football_data_df['Away_Team'] = football_data_df['Away_Team'].replace(name_mapping_fd)
 
-
-# In[4]:
-
-
 teams_fbref = set(fbref_df['Home_Team'].unique())
 teams_football_data = set(football_data_df['Home_Team'].unique())
 
@@ -94,10 +76,6 @@ fbref_df['Away_Team'] = fbref_df['Away_Team'].replace(mapping)
 football_data_df['Home_Team'] = football_data_df['Home_Team'].replace(mapping)
 football_data_df['Away_Team'] = football_data_df['Away_Team'].replace(mapping)
 
-
-# In[5]:
-
-
 teams_fbref_conflict = set(fbref_df['Home_Team'].unique())
 teams_football_data_conflict = set(football_data_df['Home_Team'].unique())
 
@@ -111,16 +89,8 @@ conflicts_football_data = teams_football_data_conflict - teams_fbref_conflict
 print("Team names in fbref not in football data:", conflicts_fbref)
 print("Team names in football data not in fbref:", conflicts_football_data)
 
-
-# In[6]:
-
-
 label_encoder = LabelEncoder()
 football_data_df['FTR'] = label_encoder.fit_transform(football_data_df['FTR'])
-
-
-# In[7]:
-
 
 # Calculate the percentage of non-empty values in each column for fbref_df
 fbref_non_empty = (fbref_df.select_dtypes(include=["number"]).notnull().sum() / len(fbref_df)) * 100
@@ -132,14 +102,7 @@ football_data_non_empty = (football_data_df.select_dtypes(include=["number"]).no
 print("\nPercentage of non-empty values in football_data_df:")
 print(football_data_non_empty)
 
-
-# In[8]:
-
-
 football_data_df.select_dtypes(include=["number"]).corr()["FTR"].sort_values(ascending=False)
-
-
-# In[9]:
 
 
 football_data_df_copy = football_data_df.dropna()
@@ -153,9 +116,6 @@ mi_results = pd.Series(mi_scores, index=X.columns).sort_values(ascending=False)
 print(mi_results)
 
 
-# In[10]:
-
-
 football_data_df = football_data_df[['Date', 'League', 'Home_Team', 'Away_Team', 
                                      "FTR", "FTHG", "FTAG", "HS", "AS", "HST", "AST"]]
 # Merge on Date, HomeTeam, and AwayTeam
@@ -167,8 +127,6 @@ combined_df = pd.merge(
 )
 combined_df = combined_df.dropna()
 
-
-# In[11]:
 
 
 def compute_gd_elo(df, k=32, initial_rating=1000):
@@ -225,9 +183,6 @@ def compute_gd_elo(df, k=32, initial_rating=1000):
     df['Home_ELO'] = home_elo_list
     df['Away_ELO'] = away_elo_list
     return df
-
-
-# In[12]:
 
 
 def compute_streaks(df):
@@ -322,9 +277,6 @@ def compute_streaks(df):
     return df
 
 
-# In[13]:
-
-
 def add_recent_points(df, window_sizes=[5, 10, 20]):
     """
     Adds rolling points over the last 'n' games for home and away teams.
@@ -375,9 +327,6 @@ def add_recent_points(df, window_sizes=[5, 10, 20]):
     return df
 
 
-# In[14]:
-
-
 def add_net_stats(df):
     stat_pairs = {
         "FTG": ("FTHG", "FTAG"),
@@ -413,28 +362,16 @@ def add_conceded_stats(df):
     return df
 
 
-# In[16]:
-
-
 combined_df = compute_gd_elo(combined_df)
 combined_df = compute_streaks(combined_df)
 combined_df = add_recent_points(combined_df)
-
-
-# In[17]:
 
 
 combined_df = add_net_stats(combined_df)
 combined_df = add_conceded_stats(combined_df)
 
 
-# In[18]:
-
-
 correlations = combined_df.select_dtypes(include=["number"]).corr()["FTR"].sort_values(ascending=False)
-
-
-# In[19]:
 
 
 # Filter correlations that contain either "Streak" or "ELO"
@@ -444,17 +381,11 @@ engineered_stats_correlations = correlations[correlations.index.str.contains("St
 print(engineered_stats_correlations)
 
 
-# In[20]:
-
-
 # Filter correlations that contain either "Streak" or "ELO"
 engineered_stats_correlations2 = correlations[correlations.index.str.contains("Net|ELO|Conceded")]
 
 # Print the filtered correlations
 print(engineered_stats_correlations2)
-
-
-# In[21]:
 
 
 # Select only numeric columns (excluding FTR for features)
@@ -466,17 +397,11 @@ mi_scores = mutual_info_classif(X, y)
 mi_results = pd.Series(mi_scores, index=X.columns).sort_values(ascending=False)
 
 
-# In[22]:
-
-
 # Select only metrics that contain "Streak" or "ELO"
 engineered_stats_mi = mi_results[mi_results.index.str.contains("Streak|Points")]
 
 # Print the filtered metrics
 print(engineered_stats_mi)
-
-
-# In[23]:
 
 
 # Select only metrics that contain "Streak" or "ELO"
@@ -486,8 +411,5 @@ engineered_stats_mi2 = mi_results[mi_results.index.str.contains("Net|ELO|Concede
 print(engineered_stats_mi2)
 
 
-# In[24]:
-
-
-combined_df.to_csv("D:/#CSProject/Data/combined_datasetxg.csv", index=False)
+combined_df.to_csv("D:/#CSProject/Data/combined_dataset.csv", index=False)
 
